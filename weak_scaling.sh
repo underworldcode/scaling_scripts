@@ -1,5 +1,5 @@
 #!/bin/bash
-export WEAK_SCALING_BASE=64
+export WEAK_SCALING_BASE=32
 export JNAME="Weak_Scaling_${WEAK_SCALING_BASE}_UW28"
 
 for i in 1 2 4 8 10 
