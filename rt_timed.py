@@ -7,18 +7,26 @@ import math
 import numpy as np
 import time
 time_post_import   = time.time()
-time_launch_srun   = float(os.environ["TIME_LAUNCH_SRUN"])/1000.
-time_launch_python = float(os.environ["TIME_LAUNCH_PYTHON"])/1000.
+time_launch_srun   = float(os.environ["TIME_LAUNCH_JOB"])/1000.
+job_name = os.environ["UW_JOB_NAME"]
+job_id   = os.environ["UW_JOB_ID"]
+
+other_timing = {}
+# record import python import time and optionally the container launch time
+# depends on cluser specific invocations of this model.
+if os.environ.get("TIME_LAUNCH_PYTHON"):
+    time_launch_python = float(os.environ["TIME_LAUNCH_PYTHON"])/1000.
+    other_timing["Python_Import_Time"]    = time_post_import   - time_launch_python
+    other_timing["Container_Launch_Time"] = time_launch_python - time_launch_srun
+else:
+    other_timing["Python_Import_Time"]    = time_post_import   - time_launch_srun
+    
 uw.timing.start()
 
 if os.environ["UW_ENABLE_IO"] == "1":
     do_IO=True
 else:
     do_IO=False
-
-other_timing = {}
-other_timing["Python_Import_Time"] = time_post_import - time_launch_python
-other_timing["Container_Launch_Time"] = time_launch_python - time_launch_srun
 
 res = 64
 RESKEY = "UW_RESOLUTION"
@@ -131,6 +139,9 @@ stokes = uw.systems.Stokes( velocityField = velocityField,
                             fn_bodyforce  = buoyancyFn )
 
 solver = uw.systems.Solver( stokes )
+#solver.options.mg.levels=5
+#solver.set_inner_rtol = 1e-7
+#solver.set_outer_rtol = 1e-6
 
 # Create a system to advect the swarm
 advector = uw.systems.SwarmAdvector( swarm=swarm, velocityField=velocityField, order=2 )
@@ -145,11 +156,15 @@ vdotv = fn.math.dot(velocityField,velocityField)
 v2sum_integral  = uw.utils.Integral( mesh=mesh, fn=vdotv )
 volume_integral = uw.utils.Integral( mesh=mesh, fn=1. )
 
+pdotp = fn.math.dot(pressureField,pressureField)
+pressure_int    = uw.utils.Integral( mesh=mesh, fn=pdotp )
+
 
 # Get instantaneous Stokes solution
 solver.solve()
 # Calculate the RMS velocity.
 vrms = math.sqrt( v2sum_integral.evaluate()[0] )
+prms = math.sqrt( pressure_int.evaluate()[0] )
 
 
 # update 
@@ -210,7 +225,7 @@ uw.timing.stop()
 module_timing_data_orig = uw.timing.get_data(group_by="routine")
 
 # write out data
-filename = "{}_Res_{}_Nproc_{}_SlurmID_{}".format(os.environ["SLURM_JOB_NAME"],res,uw.mpi.size,os.environ["SLURM_JOB_ID"])
+filename = "{}_Res_{}_Nproc_{}_SlurmID_{}".format(job_name,res,uw.mpi.size,job_id)
 import json
 if module_timing_data_orig:
     module_timing_data = {}
@@ -218,7 +233,7 @@ if module_timing_data_orig:
         module_timing_data[key[0]] = val
     other_timing["Total_Runtime"] = uw.timing._endtime-uw.timing._starttime
     module_timing_data["Other_timing"] = other_timing
-    module_timing_data["Other_data"]   = {"vrms":vrms, "res":res, "nproc":uw.mpi.size}
+    module_timing_data["Other_data"]   = {"vrms":vrms, "res":res, "nproc":uw.mpi.size, "prms":prms}
     with open(filename+".json", 'w') as fp:
         json.dump(module_timing_data, fp,sort_keys=True, indent=4)
 

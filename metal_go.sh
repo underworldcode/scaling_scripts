@@ -15,8 +15,10 @@ module load python/3.6.3
 module load numpy mpi4py
 
 export PYTHONPATH=/home/jmansour/underworld2:/home/jmansour/underworld2/glucifer:$PYTHONPATH
+
 export PREFIXSTRING=`head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo ''`
+export UW_JOB_NAME=${SLURM_JOB_NAME}
+export UW_JOB_ID=${SLURM_JOB_ID}
+export TIME_LAUNCH_JOB=`date +%s%N | cut -b1-13`
 
-
-export TIME_LAUNCH_SRUN=`date +%s%N | cut -b1-13`
 srun -n ${SLURM_NTASKS} bash -c "TIME_LAUNCH_PYTHON=\`date +%s%N | cut -b1-13\` python3 rt_timed.py"
