@@ -5,6 +5,7 @@ from underworld import function as fn
 import underworld.visualisation as vis
 import numpy as np
 import time
+import math
 
 order = int(os.getenv("UW_ORDER","2"))
 res   = int(os.getenv("UW_RESOLUTION",16))
@@ -17,7 +18,8 @@ soln_name = str(os.getenv("UW_MODEL","SolDB3d"))
 
 do_IO  = bool(int(os.getenv("UW_ENABLE_IO","0")))
 
-jobid = str(os.getenv("UW_JOB_ID","00000"))
+jobid = str(os.getenv("PBS_JOBID",os.getenv("SLURM_JOB_ID","0000000")))
+
 picklename = str(os.getenv("PICKLENAME","None"))
 
 # Find all available solutions. 
@@ -211,7 +213,7 @@ uw.timing.stop()
 module_timing_data_orig = uw.timing.get_data(group_by="line_routine")
 
 # write out data
-filename = "{}_Res_{}_Nproc_{}_JobID_{}".format(os.getenv("UW_JOB_NAME","Job"),res,uw.mpi.size,jobid)
+filename = "{}_Res_{}_Nproc_{}_JobID_{}".format(os.getenv("NAME","Job"),res,uw.mpi.size,jobid)
 import json
 if module_timing_data_orig:
     module_timing_data = {}
@@ -226,9 +228,26 @@ if module_timing_data_orig:
 uw.timing.print_table(group_by="line_routine", output_file=filename+".txt", display_fraction=0.99)
 
 if picklename != "None":
-    velocity_key = "Velocity"
-    pressure_key = "Pressure"
+
+    # grab copy of analytic solutions onto mesh variables. 
+    # this is to avoid excessive calls into analytic solutions,
+    # some of which (solH for example) are prohibitively 
+    # expensive to calculate 
+    #velocityFieldA = mesh.add_variable(mesh.dim)
+    #pressureFieldA = mesh.subMesh.add_variable(1)
+    #velocityFieldA.data[:] = soln.fn_velocity.evaluate(mesh)
+    #pressureFieldA.data[:] = soln.fn_pressure.evaluate(mesh.subMesh)
+    pressn = normalise_press(pressureField)
+    pressa = normalise_press(soln.fn_pressure)
+    #pressa = normalise_press(pressureFieldA)
+
+    errv = rms_error( velocityField, soln.fn_velocity, mesh )
+    #errv = rms_error( velocityField, velocityFieldA, mesh )
+    errp = rms_error( pressn,        pressa,         mesh )
+
     if uw.mpi.rank==0:
+        velocity_key = "Velocity"
+        pressure_key = "Pressure"
         try:
             # try and load existing results
             with open(picklename,'rb') as f:
@@ -246,25 +265,8 @@ if picklename != "None":
             err_pre = collections.OrderedDict()
             err_vel = collections.OrderedDict()
 
-    # grab copy of analytic solutions onto mesh variables. 
-    # this is to avoid excessive calls into analytic solutions,
-    # some of which (solH for example) are prohibitively 
-    # expensive to calculate 
-    #velocityFieldA = mesh.add_variable(mesh.dim)
-    #pressureFieldA = mesh.subMesh.add_variable(1)
-    #velocityFieldA.data[:] = soln.fn_velocity.evaluate(mesh)
-    #pressureFieldA.data[:] = soln.fn_pressure.evaluate(mesh.subMesh)
-    pressn = normalise_press(pressureField)
-    pressa = normalise_press(soln.fn_pressure)
-    #pressa = normalise_press(pressureFieldA)
-
-    err_vel[res] = rms_error( velocityField, soln.fn_velocity, mesh )
-    #err_vel[res] = rms_error( velocityField, velocityFieldA, mesh )
-    err_pre[res] = rms_error( pressn,        pressa,         mesh )
-
-
-    # record full state back to pickled dict
-    if uw.mpi.rank==0 :
+        err_vel[res] = errv
+        err_pre[res] = errp
         soln_results[(soln_name,order,velocity_key)] = err_vel
         soln_results[(soln_name,order,pressure_key)] = err_pre
         with open(picklename,'wb') as f:

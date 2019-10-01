@@ -1,5 +1,5 @@
 #!/bin/bash
-export JOBS=1 2 4 8 10
+export JOBS="1 2 4 8 10 12 14 16"
 export UW_NAME="Weak_Dev"
 export UW_ENABLE_IO="0"
 
@@ -10,10 +10,10 @@ export WEAK_SCALING_BASE=16
 export UW_ORDER=2
 export UW_DIM=3
 export UW_SOL_TOLERANCE=1e-11
-export UW_MODEL="SolDB3d"
+export UW_MODEL="SolDB3d" #"SolH" "SolDB3d"
 export PICKLENAME="conv_test_results_high_res_tighter_tolerances_superconv_errors.pickle"  # set to "None" to disable conv testing
 
-export NAME="${UW_NAME}_Dim_${UW_DIM}_Base_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER}_TOL_${UW_SOL_TOLERANCE}_IO_${UW_ENABLE_IO}_MODEL_${UW_MODEL}"
+export NAME="${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER}_TOL_${UW_SOL_TOLERANCE}_IO_${UW_ENABLE_IO}_MODEL_${UW_MODEL}"
 
 ## find the BATCH environment ##
 #################################
@@ -36,8 +36,6 @@ do
    export TIME_LAUNCH_JOB=`date +%s%N | cut -b1-13`
 
    if [ $BATCH_SYS == "PBS" ] ; then
-      export UW_JOB_NAME=${PBS_JOBNAME}
-      export UW_JOB_ID=${PBS_JOBID}
       export QUEUE="normal" # normal or express
 
       # memory requirement guess: 3GB * nprocs
@@ -49,8 +47,6 @@ do
       ${CMD}
    else
       export IMAGE=underworldcode/underworld2:v2.8_release
-      export UW_JOB_NAME=${SLURM_JOB_NAME}
-      export UW_JOB_ID=${SLURM_JOB_ID}
       export QUEUE="workq" # workq or debugq
 
       CMD="sbatch --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_shifter_go.sh"

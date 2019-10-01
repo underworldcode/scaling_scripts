@@ -7,5 +7,5 @@ export LD_PRELOAD=/apps/openmpi/3.1.3/lib/libmpi.so
 env
 cat timed_model.py
 
-mpirun -n ${NTASKS} bash -c "TIME_LAUNCH_PYTHON=\`date +%s%N | cut -b1-13\` python timed_model.py"
+mpirun -n ${NTASKS} bash -c "TIME_LAUNCH_PYTHON=\`date +%s%N | cut -b1-13\` python3 timed_model.py"
 
