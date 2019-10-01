@@ -1,5 +1,5 @@
 #!/bin/bash
-export JOBS="1 2 4 8 10 12 14 16"
+export JOBS="4 8 10 12 14 16"
 export UW_NAME="Weak_Dev"
 export UW_ENABLE_IO="0"
 
@@ -48,7 +48,7 @@ do
       echo ${CMD}
       ${CMD}
    else
-      export IMAGE=underworldcode/underworld2:v2.8_release
+      export IMAGE=underworldcode/underworld2:dev
       export QUEUE="workq" # workq or debugq
 
       CMD="sbatch --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_shifter_go.sh"
