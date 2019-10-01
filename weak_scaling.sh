@@ -19,8 +19,10 @@ export NAME="${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER
 #################################
 if qstat --version > /dev/null ; then
    BATCH_SYS="PBS"
+   export NAME="${NAME}_Raijin"
 elif squeue --version > /dev/null ; then
    BATCH_SYS="SLURM"
+   export NAME="${NAME}_Magnus"
 else
    echo "Can't workout batch system"
    exit 1
