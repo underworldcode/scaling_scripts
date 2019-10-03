@@ -46,13 +46,7 @@ other_timing = {}
 other_timing["Python_Import_Time"] = time_post_import - time_launch_python
 other_timing["Container_Launch_Time"] = time_launch_python - time_launch_srun
 
-def normalise_press(press):
-    intSwarm = uw.swarm.GaussIntegrationSwarm(mesh,3)  # use 3 point gauss swarms for efficiency
-    av_press = uw.utils.Integral( press, mesh, integrationSwarm=intSwarm, integrationType=None).evaluate()[0]
-    
-    return press - av_press
-
-def rms_error(numeric, analytic, mesh):
+def rms_error(numeric, analytic, mesh, nodal_errors=False, normalise=False):
     '''
     Calculates the rms error.
     
@@ -61,14 +55,28 @@ def rms_error(numeric, analytic, mesh):
     abs, abs_scaled: float
         The absolute and scaled absolute errors.
     '''
-
+    partCountMap = { "DQ0"  : 1,
+                     "Q1"   : 2,
+                     "DQ1"  : 2,
+                     "DPC1" : 2,
+                     "Q2"   : 3  }
+    particleCount = partCountMap[ numeric.mesh.elementType.upper() ]
+    intSwarm = uw.swarm.GaussIntegrationSwarm(mesh,particleCount) 
+    if nodal_errors:
+    # some of which (solH for example) are prohibitively 
+        analyticsoln = analytic # grab copy before replacing
+        analytic = numeric.mesh.add_variable(numeric.nodeDofCount)
+        analytic.data[:] = analyticsoln.evaluate(numeric.mesh) # careful here to eval on corresponding mesh
+    
+    if normalise:
+        numeric  -= uw.utils.Integral( numeric,  mesh, integrationSwarm=intSwarm, integrationType=None).evaluate()[0]
+        analytic -= uw.utils.Integral( analytic, mesh, integrationSwarm=intSwarm, integrationType=None).evaluate()[0]
+ 
     delta     = analytic - numeric
     delta_dot = fn.math.dot(delta,delta)
+    #analytic_dot = fn.math.dot(analytic,analytic)
 
-    analytic_dot = fn.math.dot(analytic,analytic)
-    
     # l2 norms
-    intSwarm = uw.swarm.GaussIntegrationSwarm(mesh,3)  # use 3 point gauss swarms for efficiency
     rms_err_abs = np.sqrt(uw.utils.Integral(    delta_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
 #     rms_sol_ana = np.sqrt(uw.utils.Integral( analytic_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
 #     rms_err_sca = rms_err_abs / rms_sol_ana
@@ -209,41 +217,11 @@ if do_IO:
     if not np.allclose(materialIndex_copy.data, materialIndex.data):
         raise RuntimeError("Loaded material data does not appear to be identical to previous data.")
 
-uw.timing.stop()
-module_timing_data_orig = uw.timing.get_data(group_by="line_routine")
-
-# write out data
-filename = "{}_Res_{}_Nproc_{}_JobID_{}".format(os.getenv("NAME","Job"),res,uw.mpi.size,jobid)
-import json
-if module_timing_data_orig:
-    module_timing_data = {}
-    for key,val in module_timing_data_orig.items():
-        module_timing_data[key[0]] = val
-    other_timing["Total_Runtime"] = uw.timing._endtime-uw.timing._starttime
-    module_timing_data["Other_timing"] = other_timing
-    module_timing_data["Other_data"]   = { "res":res, "nproc":uw.mpi.size, "vrms":vrms, "prms":prms }
-    with open(filename+".json", 'w') as fp:
-        json.dump(module_timing_data, fp,sort_keys=True, indent=4)
-
-uw.timing.print_table(group_by="line_routine", output_file=filename+".txt", display_fraction=0.99)
-
 if picklename != "None":
 
-    # grab copy of analytic solutions onto mesh variables. 
-    # this is to avoid excessive calls into analytic solutions,
-    # some of which (solH for example) are prohibitively 
-    # expensive to calculate 
-    #velocityFieldA = mesh.add_variable(mesh.dim)
-    #pressureFieldA = mesh.subMesh.add_variable(1)
-    #velocityFieldA.data[:] = soln.fn_velocity.evaluate(mesh)
-    #pressureFieldA.data[:] = soln.fn_pressure.evaluate(mesh.subMesh)
-    pressn = normalise_press(pressureField)
-    pressa = normalise_press(soln.fn_pressure)
-    #pressa = normalise_press(pressureFieldA)
-
-    errv = rms_error( velocityField, soln.fn_velocity, mesh )
-    #errv = rms_error( velocityField, velocityFieldA, mesh )
-    errp = rms_error( pressn,        pressa,         mesh )
+    # use nodal errors for efficiency. 
+    errv = rms_error( velocityField, soln.fn_velocity, mesh, nodal_errors=False)
+    errp = rms_error( pressureField, soln.fn_pressure, mesh, nodal_errors=False, normalise=True )
 
     if uw.mpi.rank==0:
         velocity_key = "Velocity"
@@ -274,3 +252,21 @@ if picklename != "None":
             f.write(pickle.dumps(soln_results))
 
 
+
+uw.timing.stop()
+module_timing_data_orig = uw.timing.get_data(group_by="line_routine")
+
+# write out data
+filename = "{}_Res_{}_Nproc_{}_JobID_{}".format(os.getenv("NAME","Job"),res,uw.mpi.size,jobid)
+import json
+if module_timing_data_orig:
+    module_timing_data = {}
+    for key,val in module_timing_data_orig.items():
+        module_timing_data[key[0]] = val
+    other_timing["Total_Runtime"] = uw.timing._endtime-uw.timing._starttime
+    module_timing_data["Other_timing"] = other_timing
+    module_timing_data["Other_data"]   = { "res":res, "nproc":uw.mpi.size, "vrms":vrms, "prms":prms }
+    with open(filename+".json", 'w') as fp:
+        json.dump(module_timing_data, fp,sort_keys=True, indent=4)
+
+uw.timing.print_table(group_by="line_routine", output_file=filename+".txt", display_fraction=0.99)

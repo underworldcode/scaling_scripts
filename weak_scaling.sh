@@ -1,16 +1,16 @@
 #!/bin/bash
-export JOBS="1 2 4 8 10 12 14 16"
+export JOBS="1 2 4" #16" #"1 2 4 8 10 12 14 16"
 export UW_NAME="Weak_Dev"
 export UW_ENABLE_IO="0"
 
-export WALLTIME="00:10:00"
+export WALLTIME="00:60:00"
 export ACCOUNT="m18"
 
-export WEAK_SCALING_BASE=16
-export UW_ORDER=2
+export WEAK_SCALING_BASE=32
+export UW_ORDER=1
 export UW_DIM=3
-export UW_SOL_TOLERANCE=1e-11
-export UW_MODEL="SolDB3d" #"SolH" "SolDB3d"
+export UW_SOL_TOLERANCE=1e-8
+export UW_MODEL="SolH" # Use "SolH" for dim3,order1, use "SolDB3d" for dim3,order2.
 export PICKLENAME="conv_test_results_high_res_tighter_tolerances_superconv_errors.pickle"  # set to "None" to disable conv testing
 
 export NAME="${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER}_TOL_${UW_SOL_TOLERANCE}_IO_${UW_ENABLE_IO}_MODEL_${UW_MODEL}"
