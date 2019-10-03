@@ -1,5 +1,5 @@
 #!/bin/bash
-export JOBS="1 2 4" #16" #"1 2 4 8 10 12 14 16"
+export JOBS="4 8 10 12 14 16"
 export UW_NAME="Weak_Dev"
 export UW_ENABLE_IO="0"
 
@@ -19,8 +19,10 @@ export NAME="${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER
 #################################
 if qstat --version > /dev/null ; then
    BATCH_SYS="PBS"
+   export NAME="${NAME}_Raijin"
 elif squeue --version > /dev/null ; then
    BATCH_SYS="SLURM"
+   export NAME="${NAME}_Magnus"
 else
    echo "Can't workout batch system"
    exit 1
@@ -46,7 +48,7 @@ do
       echo ${CMD}
       ${CMD}
    else
-      export IMAGE=underworldcode/underworld2:v2.8_release
+      export IMAGE=underworldcode/underworld2:dev
       export QUEUE="workq" # workq or debugq
 
       CMD="sbatch --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_shifter_go.sh"
