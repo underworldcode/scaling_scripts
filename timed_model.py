@@ -63,7 +63,6 @@ def rms_error(numeric, analytic, mesh, nodal_errors=False, normalise=False):
     particleCount = partCountMap[ numeric.mesh.elementType.upper() ]
     intSwarm = uw.swarm.GaussIntegrationSwarm(mesh,particleCount) 
     if nodal_errors:
-    # some of which (solH for example) are prohibitively 
         analyticsoln = analytic # grab copy before replacing
         analytic = numeric.mesh.add_variable(numeric.nodeDofCount)
         analytic.data[:] = analyticsoln.evaluate(numeric.mesh) # careful here to eval on corresponding mesh
@@ -218,7 +217,6 @@ if do_IO:
         raise RuntimeError("Loaded material data does not appear to be identical to previous data.")
 
 if picklename != "None":
-
     # use nodal errors for efficiency. 
     errv = rms_error( velocityField, soln.fn_velocity, mesh, nodal_errors=False)
     errp = rms_error( pressureField, soln.fn_pressure, mesh, nodal_errors=False, normalise=True )
