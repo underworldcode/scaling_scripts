@@ -13,6 +13,7 @@ dim   = int(os.getenv("UW_DIM",3))
 
 itol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-10))
 otol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-10))
+penalty  = float(os.getenv("UW_PENALTY",-1.))
 
 soln_name = str(os.getenv("UW_MODEL","SolDB3d"))
 
@@ -109,6 +110,8 @@ if soln.nonlinear==True:
     stokes.fn_viscosity = 1.
     solver.solve()
     stokes.fn_viscosity = visc
+if penalty>=0.:
+    solver.set_penalty(penalty)
 
 # functions for calculating RMS velocity
 vdotv = fn.math.dot(velocityField,velocityField)
@@ -143,8 +146,8 @@ advdiffBc = uw.conditions.DirichletCondition( variable        = temperatureField
 # Create a dummy temperature field.
 advdiff = uw.systems.AdvectionDiffusion(velocityField=velocityField, phiField=temperatureField, phiDotField=temperatureFieldDeriv, 
                                         fn_diffusivity=1.,conditions=advdiffBc, allow_non_q1=True)
-advdiff2 = uw.systems.AdvectionDiffusion(velocityField=velocityField, phiField=temperatureField, 
-                                        fn_diffusivity=1.,conditions=advdiffBc, allow_non_q1=True, method="SLCN")
+#advdiff2 = uw.systems.AdvectionDiffusion(velocityField=velocityField, phiField=temperatureField, 
+#                                        fn_diffusivity=1.,conditions=advdiffBc, allow_non_q1=True, method="SLCN")
 
 # Create a swarm.
 swarm = uw.swarm.Swarm( mesh=mesh, particleEscape=True)
@@ -171,8 +174,8 @@ dt = advector.get_max_dt()
 advector.integrate(dt)
 dt = advdiff.get_max_dt()
 advdiff.integrate(dt)
-dt = advdiff2.get_max_dt()
-advdiff2.integrate(dt)
+#dt = advdiff2.get_max_dt()
+#advdiff2.integrate(dt)
 
 
 # Save things
@@ -252,7 +255,7 @@ if picklename != "None":
 
 
 uw.timing.stop()
-module_timing_data_orig = uw.timing.get_data(group_by="line_routine")
+module_timing_data_orig = uw.timing.get_data(group_by="routine")
 
 # write out data
 filename = "{}_Res_{}_Nproc_{}_JobID_{}".format(os.getenv("NAME","Job"),res,uw.mpi.size,jobid)
@@ -267,4 +270,4 @@ if module_timing_data_orig:
     with open(filename+".json", 'w') as fp:
         json.dump(module_timing_data, fp,sort_keys=True, indent=4)
 
-uw.timing.print_table(group_by="line_routine", output_file=filename+".txt", display_fraction=0.99)
+uw.timing.print_table(group_by="routine", output_file=filename+".txt", display_fraction=0.99)
