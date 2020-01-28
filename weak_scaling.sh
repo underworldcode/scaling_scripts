@@ -4,14 +4,14 @@ export NAME="${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER
 
 ## find the BATCH environment ##
 #################################
-if qstat --version > /dev/null ; then
+if qstat --version &> /dev/null ; then
    BATCH_SYS="PBS"
    export NAME="${NAME}_Raijin"
-elif squeue --version > /dev/null ; then
+elif squeue --version &> /dev/null ; then
    BATCH_SYS="SLURM"
    export NAME="${NAME}_Magnus"
 else
-   echo "Can't workout batch system"
+   echo "Can't determine batch system"
    exit 1
 fi
 
@@ -35,10 +35,10 @@ do
       echo ${CMD}
       ${CMD}
    else
-      export IMAGE=underworldcode/underworld2:dev
+      export IMAGE=/group/m18/singularity/underworld/underworld2_v29.sif
       export QUEUE="workq" # workq or debugq
 
-      CMD="sbatch --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_shifter_go.sh"
+      CMD="sbatch --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
       echo ${CMD}
       ${CMD}
    fi
