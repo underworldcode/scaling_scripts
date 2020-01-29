@@ -6,7 +6,7 @@ export NAME="${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER
 #################################
 if qstat --version &> /dev/null ; then
    BATCH_SYS="PBS"
-   export NAME="${NAME}_Raijin"
+   export NAME="${NAME}_Gadi"
 elif squeue --version &> /dev/null ; then
    BATCH_SYS="SLURM"
    export NAME="${NAME}_Magnus"
@@ -29,9 +29,9 @@ do
 
       # memory requirement guess: 3GB * nprocs
       MEMORY="$((3*${NTASKS}))GB"
-      PBSTASKS=`python2<<<"print((${NTASKS}/16 + (${NTASKS} % 16 > 0))*16)"`  # round up to nearest 16 as required by nci
+      PBSTASKS=`python2<<<"print((${NTASKS}/48 + (${NTASKS} % 48 > 0))*48)"`  # round up to nearest 48 as required by nci
       # -V to pass all env vars to PBS (raijin/nci) 
-      CMD="qsub -V -N ${NAME} -l ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} raijin_baremetal_go.sh"
+      CMD="qsub -V -N ${NAME} -l ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
       echo ${CMD}
       ${CMD}
    else
