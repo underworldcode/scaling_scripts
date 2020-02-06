@@ -217,6 +217,11 @@ if do_IO:
     materialIndex_copy.load("{}_materialIndex.h5".format(jobid))
     if not np.allclose(materialIndex_copy.data, materialIndex.data):
         raise RuntimeError("Loaded material data does not appear to be identical to previous data.")
+    # tidy up
+    uw.mpi.barrier()
+    if uw.mpi.rank==0:
+        for filename_endpart in ("RT.gldb","Mesh.h5","velocityField.h5","velocityField.xdmf","Swarm.h5","materialIndex.h5","materialIndex.xdmf"):
+            os.remove('{}_{}'.format(jobid,filename_endpart))
 
 if picklename != "None":
     errv = rms_error( velocityField, soln.fn_velocity, mesh, nodal_errors=True)
