@@ -38,14 +38,14 @@ soln = solns_avail[soln_name]()
 
 
 time_post_import   = time.time()
-time_launch_srun   = float(os.getenv("TIME_LAUNCH_SRUN"  ,time_post_import))/1000.
+time_launch_mpi    = float(os.getenv("TIME_LAUNCH_MPI"   ,time_post_import))/1000.
 time_launch_python = float(os.getenv("TIME_LAUNCH_PYTHON",time_post_import))/1000.
 
 uw.timing.start()
 
 other_timing = {}
 other_timing["Python_Import_Time"] = time_post_import - time_launch_python
-other_timing["Container_Launch_Time"] = time_launch_python - time_launch_srun
+other_timing[   "MPI_Launch_Time"] = time_launch_python - time_launch_mpi
 
 def rms_error(numeric, analytic, mesh, nodal_errors=False, normalise=False):
     '''
