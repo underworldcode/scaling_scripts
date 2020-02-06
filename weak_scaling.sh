@@ -1,6 +1,6 @@
 #!/bin/bash
 source weak_params.sh
-export NAME="${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER}_TOL_${UW_SOL_TOLERANCE}_PENALTY_${UW_PENALTY}_IO_${UW_ENABLE_IO}_MODEL_${UW_MODEL}"
+export NAME="Results_Weak_${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER}_TOL_${UW_SOL_TOLERANCE}_PENALTY_${UW_PENALTY}_IO_${UW_ENABLE_IO}_MODEL_${UW_MODEL}"
 
 ## find the BATCH environment ##
 #################################
@@ -17,16 +17,16 @@ fi
 
 echo "Batch system is $BATCH_SYS"
 #################################
-mkdir -p Weak_${NAME}
-cp *.sh Weak_${NAME}
-cp *.py Weak_${NAME}
-cd Results_Weak_${NAME}
+mkdir -p ${NAME}
+cp *.sh ${NAME}
+cp *.py ${NAME}
+cd ${NAME}
 
 for i in ${JOBS} 
 do
    export UW_RESOLUTION="$((${WEAK_SCALING_BASE} * ${i}))"
    export NTASKS="$((${i}*${i}*${i}))"
-   export EXPORTVARS = "UW_RESOLUTION,NTASKS,UW_ENABLE_IO,UW_ORDER,UW_DIM,UW_SOL_TOLERANCE,UW_PENALTY,UW_MODEL,PICKLENAME"
+   export EXPORTVARS="UW_RESOLUTION,NTASKS,UW_ENABLE_IO,UW_ORDER,UW_DIM,UW_SOL_TOLERANCE,UW_PENALTY,UW_MODEL,PICKLENAME"
 
    if [ $BATCH_SYS == "PBS" ] ; then
       export QUEUE="normal" # normal or express
@@ -42,7 +42,7 @@ do
       export IMAGE=/group/m18/singularity/underworld/underworld2_v29.sif
       export QUEUE="workq" # workq or debugq
 
-      CMD="sbatch --export=${EXPORTVARS} --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
+      CMD="sbatch --export=IMAGE,${EXPORTVARS} --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
       echo ${CMD}
       ${CMD}
    fi

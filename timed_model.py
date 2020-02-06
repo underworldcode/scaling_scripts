@@ -256,7 +256,7 @@ uw.timing.stop()
 module_timing_data_orig = uw.timing.get_data(group_by="routine")
 
 # write out data
-filename = "Res_{}_Nproc_{}_JobID_{}".format(os.getenv(res,uw.mpi.size,jobid)
+filename = "Res_{}_Nproc_{}_JobID_{}".format(res,uw.mpi.size,jobid)
 import json
 if module_timing_data_orig:
     module_timing_data = {}
