@@ -17,12 +17,16 @@ fi
 
 echo "Batch system is $BATCH_SYS"
 #################################
+mkdir -p Weak_${NAME}
+cp *.sh Weak_${NAME}
+cp *.py Weak_${NAME}
+cd Results_Weak_${NAME}
 
 for i in ${JOBS} 
 do
    export UW_RESOLUTION="$((${WEAK_SCALING_BASE} * ${i}))"
    export NTASKS="$((${i}*${i}*${i}))"
-   export TIME_LAUNCH_JOB=`date +%s%N | cut -b1-13`
+   export EXPORTVARS = "UW_RESOLUTION,NTASKS,UW_ENABLE_IO,UW_ORDER,UW_DIM,UW_SOL_TOLERANCE,UW_PENALTY,UW_MODEL,PICKLENAME"
 
    if [ $BATCH_SYS == "PBS" ] ; then
       export QUEUE="normal" # normal or express
@@ -31,14 +35,14 @@ do
       MEMORY="$((3*${NTASKS}))GB"
       PBSTASKS=`python2<<<"print((${NTASKS}/48 + (${NTASKS} % 48 > 0))*48)"`  # round up to nearest 48 as required by nci
       # -V to pass all env vars to PBS (raijin/nci) 
-      CMD="qsub -V -N ${NAME} -l ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
+      CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
       echo ${CMD}
       ${CMD}
    else
       export IMAGE=/group/m18/singularity/underworld/underworld2_v29.sif
       export QUEUE="workq" # workq or debugq
 
-      CMD="sbatch --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
+      CMD="sbatch --export=${EXPORTVARS} --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
       echo ${CMD}
       ${CMD}
    fi

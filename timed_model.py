@@ -64,7 +64,7 @@ def rms_error(numeric, analytic, mesh, nodal_errors=False, normalise=False):
     particleCount = partCountMap[ numeric.mesh.elementType.upper() ]
     intSwarm = uw.swarm.GaussIntegrationSwarm(mesh,particleCount) 
     if nodal_errors:
-        analyticsoln = analytic # grab copy before replacing
+        analyticsoln = analytic # grab handle before replacing
         analytic = numeric.mesh.add_variable(numeric.nodeDofCount)
         analytic.data[:] = analyticsoln.evaluate(numeric.mesh) # careful here to eval on corresponding mesh
     
@@ -78,7 +78,7 @@ def rms_error(numeric, analytic, mesh, nodal_errors=False, normalise=False):
 
     # l2 norms
     rms_err_abs = np.sqrt(uw.utils.Integral(    delta_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
-#     rms_sol_ana = np.sqrt(uw.utils.Integral( analytic_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
+    # rms_sol_ana = np.sqrt(uw.utils.Integral( analytic_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
 #     rms_err_sca = rms_err_abs / rms_sol_ana
         
     return rms_err_abs, 0. #rms_err_sca
@@ -143,10 +143,9 @@ kWalls = mesh.specialSets["MinK_VertexSet"] + mesh.specialSets["MaxK_VertexSet"]
 advdiffBc = uw.conditions.DirichletCondition( variable        = temperatureField,
                                               indexSetsPerDof = kWalls )
 
-# Create a dummy temperature field.
 advdiff = uw.systems.AdvectionDiffusion(velocityField=velocityField, phiField=temperatureField, phiDotField=temperatureFieldDeriv, 
                                         fn_diffusivity=1.,conditions=advdiffBc, allow_non_q1=True)
-#advdiff2 = uw.systems.AdvectionDiffusion(velocityField=velocityField, phiField=temperatureField, 
+# advdiff2 = uw.systems.AdvectionDiffusion(velocityField=velocityField, phiField=temperatureField, 
 #                                        fn_diffusivity=1.,conditions=advdiffBc, allow_non_q1=True, method="SLCN")
 
 # Create a swarm.
@@ -174,8 +173,8 @@ dt = advector.get_max_dt()
 advector.integrate(dt)
 dt = advdiff.get_max_dt()
 advdiff.integrate(dt)
-#dt = advdiff2.get_max_dt()
-#advdiff2.integrate(dt)
+# dt = advdiff2.get_max_dt()
+# advdiff2.integrate(dt)
 
 
 # Save things
@@ -220,9 +219,8 @@ if do_IO:
         raise RuntimeError("Loaded material data does not appear to be identical to previous data.")
 
 if picklename != "None":
-    # use nodal errors for efficiency. 
-    errv = rms_error( velocityField, soln.fn_velocity, mesh, nodal_errors=False)
-    errp = rms_error( pressureField, soln.fn_pressure, mesh, nodal_errors=False, normalise=True )
+    errv = rms_error( velocityField, soln.fn_velocity, mesh, nodal_errors=True)
+    errp = rms_error( pressureField, soln.fn_pressure, mesh, nodal_errors=True, normalise=True )
 
     if uw.mpi.rank==0:
         velocity_key = "Velocity"
@@ -258,7 +256,7 @@ uw.timing.stop()
 module_timing_data_orig = uw.timing.get_data(group_by="routine")
 
 # write out data
-filename = "{}_Res_{}_Nproc_{}_JobID_{}".format(os.getenv("NAME","Job"),res,uw.mpi.size,jobid)
+filename = "Res_{}_Nproc_{}_JobID_{}".format(os.getenv(res,uw.mpi.size,jobid)
 import json
 if module_timing_data_orig:
     module_timing_data = {}
