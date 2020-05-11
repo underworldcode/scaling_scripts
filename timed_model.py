@@ -74,14 +74,14 @@ def rms_error(numeric, analytic, mesh, nodal_errors=False, normalise=False):
  
     delta     = analytic - numeric
     delta_dot = fn.math.dot(delta,delta)
-    #analytic_dot = fn.math.dot(analytic,analytic)
+    analytic_dot = fn.math.dot(analytic,analytic)
 
     # l2 norms
     rms_err_abs = np.sqrt(uw.utils.Integral(    delta_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
-    # rms_sol_ana = np.sqrt(uw.utils.Integral( analytic_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
-#     rms_err_sca = rms_err_abs / rms_sol_ana
+    rms_sol_ana = np.sqrt(uw.utils.Integral( analytic_dot, mesh, integrationSwarm=intSwarm, integrationType=None ).evaluate()[0])
+    rms_err_sca = rms_err_abs / rms_sol_ana
         
-    return rms_err_abs, 0. #rms_err_sca
+    return rms_err_abs, rms_err_sca
 
 
 if order == 1:
@@ -224,8 +224,8 @@ if do_IO:
             os.remove('{}_{}'.format(jobid,filename_endpart))
 
 if picklename != "None":
-    errv = rms_error( velocityField, soln.fn_velocity, mesh, nodal_errors=True)
-    errp = rms_error( pressureField, soln.fn_pressure, mesh, nodal_errors=True, normalise=True )
+    errv = rms_error( velocityField, soln.fn_velocity, mesh, nodal_errors=False)
+    errp = rms_error( pressureField, soln.fn_pressure, mesh, nodal_errors=False, normalise=True )
 
     if uw.mpi.rank==0:
         velocity_key = "Velocity"
