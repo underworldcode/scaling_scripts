@@ -3,6 +3,9 @@ Scaling Scripts
 
 This repo contains scripts to launch jobs for weak/strong scaling. 
 
+To launch a set of weak scaling jobs, you will generally modify the parameters in `weak_params.sh` 
+as necessary, and then execute `weak_scaling.sh` which will queue a set of jobs on the system. 
+
 
 timed_model.py
 --------------
@@ -21,7 +24,8 @@ modify values here.
 
 strong_scaling.sh
 -----------------
-This script will queue a set of jobs for testing underworld simulation strong scaling.
+This script will queue a set of jobs for testing underworld simulation strong scaling. Note that this 
+script is old and requires updating. 
 
 scaling_graphs.ipynb
 --------------------
