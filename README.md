@@ -6,6 +6,10 @@ This repo contains scripts to launch jobs for weak/strong scaling.
 To launch a set of weak scaling jobs, you will generally modify the parameters in `weak_params.sh` 
 as necessary, and then execute `weak_scaling.sh` which will queue a set of jobs on the system. 
 
+The executed jobs will generated JSON files which record timing information for the different execution
+stages. A equivalent user readable TXT file will also be generated which records a summary. This data
+is utilised by `scaling_graphs.ipynb` to generate graphs of the results. 
+
 
 timed_model.py
 --------------
