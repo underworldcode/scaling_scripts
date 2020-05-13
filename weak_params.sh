@@ -1,9 +1,9 @@
 #!/bin/bash
-export JOBS="1 2 4 8 10 12 14 16" # 18 20 22 24"
-export UW_NAME="V29_system_petsc_high_mem"
+export JOBS="1 2 4 8 10 12 14 16 18 20 22 24"
+export UW_NAME="V29"
 export UW_ENABLE_IO="0"
 
-export WALLTIME="00:15:00"
+export WALLTIME="00:23:00"
 export ACCOUNT="m18"
 
 export WEAK_SCALING_BASE=16

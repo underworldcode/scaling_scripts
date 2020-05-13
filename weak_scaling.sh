@@ -39,7 +39,7 @@ do
       echo ${CMD}
       ${CMD}
    else
-      export IMAGE=/group/m18/singularity/underworld/underworld2_v29.sif
+      export IMAGE=/group/m18/singularity/underworld/underworld2_dev.sif
       export QUEUE="workq" # workq or debugq
 
       CMD="sbatch --export=IMAGE,${EXPORTVARS} --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
