@@ -27,7 +27,6 @@ do
    export UW_RESOLUTION="$((${WEAK_SCALING_BASE} * ${i}))"
    export NTASKS="$((${i}*${i}*${i}))"
    export EXPORTVARS="UW_RESOLUTION,NTASKS,UW_ENABLE_IO,UW_ORDER,UW_DIM,UW_SOL_TOLERANCE,UW_PENALTY,UW_MODEL,PICKLENAME"
-
    if [ $BATCH_SYS == "PBS" ] ; then
       export QUEUE="normal" # normal or express
 
@@ -39,10 +38,12 @@ do
       echo ${CMD}
       ${CMD}
    else
-      export IMAGE=/group/m18/singularity/underworld/underworld2_dev.sif
+      export IMAGE=/group/m18/singularity/underworld/underworld2_2.10.0b_rc.sif
+      #export IMAGE=/group/m18/singularity/underworld/underworld2_v29.sif
       export QUEUE="workq" # workq or debugq
+      export OUTNAME="Res_"${UW_RESOLUTION}"_Nproc_"${NTASKS}"_JobID_"%j".out"
 
-      CMD="sbatch --export=IMAGE,${EXPORTVARS} --job-name=${NAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
+      CMD="sbatch --export=IMAGE,${EXPORTVARS} --job-name=${NAME} --output=${OUTNAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
       echo ${CMD}
       ${CMD}
    fi

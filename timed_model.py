@@ -12,7 +12,7 @@ res   = int(os.getenv("UW_RESOLUTION",16))
 dim   = int(os.getenv("UW_DIM",3))
 
 itol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-10))
-otol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-10))
+otol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-10))*10
 penalty  = float(os.getenv("UW_PENALTY",-1.))
 
 soln_name = str(os.getenv("UW_MODEL","SolDB3d"))
