@@ -12,5 +12,5 @@ env
 cat timed_model.py
 
 export TIME_LAUNCH_MPI=`date +%s%N | cut -b1-13`
-mpirun -n ${NTASKS} bash -c "TIME_LAUNCH_PYTHON=\`date +%s%N | cut -b1-13\` python3 timed_model.py"
+mpirun -n ${NTASKS} bash -c "TIME_LAUNCH_PYTHON=\`date +%s%N | cut -b1-13\` python3 ${UW_SCRIPT}"
 
