@@ -34,7 +34,7 @@ do
       MEMORY="$((4*${NTASKS}))GB"
       PBSTASKS=`python2<<<"print((${NTASKS}/48 + (${NTASKS} % 48 > 0))*48)"`  # round up to nearest 48 as required by nci
       # -V to pass all env vars to PBS (raijin/nci) 
-      CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
+      CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/${ACCOUNT},ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
       echo ${CMD}
       ${CMD}
    else
