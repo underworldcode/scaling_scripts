@@ -14,6 +14,7 @@ dim   = int(os.getenv("UW_DIM",3))
 itol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-10))
 otol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-10))*10
 penalty  = float(os.getenv("UW_PENALTY",-1.))
+max_its  = int(os.getenv("UW_MAX_ITS",-1))
 
 soln_name = str(os.getenv("UW_MODEL","SolDB3d"))
 
@@ -104,8 +105,15 @@ if soln.nonlinear==True:
     visc = soln.get_viscosity_nl(vel,press)
 stokes = uw.systems.Stokes(velocityField, pressureField, fn_viscosity=visc, fn_bodyforce=soln.fn_bodyforce, conditions=[bcs,])
 solver = uw.systems.Solver(stokes)
-solver.set_inner_rtol(itol)
-solver.set_outer_rtol(otol)
+
+if max_its < 0:
+    solver.set_inner_rtol(itol)
+    solver.set_outer_rtol(otol)
+else:
+    solver.set_inner_method("nomg")
+    solver.options.A11.ksp_rtol=1e-99; solver.options.A11.ksp_max_it = max_its
+    solver.options.scr.ksp_rtol=1e-99; solver.options.scr.ksp_max_it = max_its
+
 if soln.nonlinear==True:
     stokes.fn_viscosity = 1.
     solver.solve()

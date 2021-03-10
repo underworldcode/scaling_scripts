@@ -1,6 +1,6 @@
 #!/bin/bash
 source weak_params.sh
-export NAME="Results_Weak_${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER}_TOL_${UW_SOL_TOLERANCE}_PENALTY_${UW_PENALTY}_IO_${UW_ENABLE_IO}_MODEL_${UW_MODEL}"
+export NAME="Results_Weak_${UW_NAME}_DIM_${UW_DIM}_BASE_${WEAK_SCALING_BASE}_ORDER_${UW_ORDER}_MAXITS_${UW_MAX_ITS}_TOL_${UW_SOL_TOLERANCE}_PENALTY_${UW_PENALTY}_IO_${UW_ENABLE_IO}_MODEL_${UW_MODEL}"
 
 ## find the BATCH environment ##
 #################################
@@ -26,7 +26,7 @@ for i in ${JOBS}
 do
    export UW_RESOLUTION="$((${WEAK_SCALING_BASE} * ${i}))"
    export NTASKS="$((${i}*${i}*${i}))"
-   export EXPORTVARS="UW_RESOLUTION,NTASKS,UW_ENABLE_IO,UW_ORDER,UW_DIM,UW_SOL_TOLERANCE,UW_PENALTY,UW_MODEL,PICKLENAME"
+   export EXPORTVARS="UW_RESOLUTION,NTASKS,UW_ENABLE_IO,UW_ORDER,UW_DIM,UW_SOL_TOLERANCE,UW_MAX_ITS,UW_PENALTY,UW_MODEL,PICKLENAME"
    if [ $BATCH_SYS == "PBS" ] ; then
       export QUEUE="normal" # normal or express
 
@@ -34,7 +34,7 @@ do
       MEMORY="$((4*${NTASKS}))GB"
       PBSTASKS=`python2<<<"print((${NTASKS}/48 + (${NTASKS} % 48 > 0))*48)"`  # round up to nearest 48 as required by nci
       # -V to pass all env vars to PBS (raijin/nci) 
-      CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/${ACCOUNT},ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
+      CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/m18,ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
       echo ${CMD}
       ${CMD}
    else

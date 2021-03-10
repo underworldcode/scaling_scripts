@@ -1,11 +1,7 @@
 #!/bin/bash
 
 # the follow load the full software stack and running environment on gadi
-source /g/data/m18/codes/gadi_setup.sh
-#source /scratch/m18/codes/UWGeodynamics_2.10.sh
-#source /g/data/m18/codes/UWGeodynamics_2.10.sh
-#source /scratch/m18/codes/UWGeodynamics_2.10.2.sh
-
+source /g/data/m18/codes/UWGeodynamics_2.10.sh
 env
 cat timed_model.py
 
