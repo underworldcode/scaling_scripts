@@ -8,9 +8,10 @@ import math
 from petsc4py import PETSc
 from underworld3.systems import Stokes
 from mpi4py import MPI
+rank = MPI.COMM_WORLD.rank
 
 order = int(os.getenv("UW_ORDER", "1" ))
-res   = int(os.getenv("UW_RESOLUTION", 8 ))
+res   = int(os.getenv("UW_RESOLUTION", 32 ))
 dim   = int(os.getenv("UW_DIM", 3 ))
 
 otol  = float(os.getenv("UW_SOL_TOLERANCE", 1.e-6))
@@ -39,6 +40,7 @@ time_launch_mpi    = float(os.getenv("TIME_LAUNCH_MPI"   ,time_post_import))/100
 time_launch_python = float(os.getenv("TIME_LAUNCH_PYTHON",time_post_import))/1000.
 
 uw.timing.start()
+stime = time.time()
 
 other_timing = {}
 other_timing["Python_Import_Time"] = time_post_import - time_launch_python
@@ -81,12 +83,17 @@ options["snes_max_it"] = 1
 # sys.pushErrorHandler("traceback")
 
 mesh   = uw.mesh.Mesh(elementRes=(res,)*dim,minCoords=(0.,)*dim,maxCoords=(1.,)*dim)
+if rank==0: print(f"runtime {time.time()-stime}s, mesh init done.")
 stokes = Stokes(mesh, u_degree=order )
+if rank==0: print(f"runtime {time.time()-stime}s, stokes init done.")
 swarm  = uw.swarm.Swarm(mesh)
 # Add variable for material
-matSwarmVar = swarm.add_variable(name="matSwarmVar",  num_components=1, dtype=PETSc.IntType)
+matSwarmVar = swarm.add_variable(name="matSwarmVar",  num_components=1,   dtype=PETSc.IntType)
+velSwarmVar = swarm.add_variable(name="velSwarmVar",  num_components=dim, dtype=PETSc.ScalarType)
 # Note that `ppcell` specifies particles per cell per dim.
 swarm.populate(ppcell=ppcell)
+
+if rank==0: print(f"runtime {time.time()-stime}s, swarm init and populate done.")
 
 import numpy as np
 with swarm.access():
@@ -96,6 +103,7 @@ with swarm.access(swarm.particle_coordinates):
     factor = 0.5*boxLength/res/ppcell
     swarm.particle_coordinates.data[:] += factor*np.random.rand(*swarm.particle_coordinates.data.shape)
 
+if rank==0: print(f"runtime {time.time()-stime}s, particle random done.")
 # define these for convenience. 
 denseIndex = 0
 lightIndex = 1
@@ -133,9 +141,11 @@ v_dot_v_int = uw.maths.Integral(mesh, stokes.u.fn.dot(stokes.u.fn))
 import math
 
 
+if rank==0: print(f"runtime {time.time()-stime}s, mat var configured.")
 # Solve time
 stokes.solve()
 
+if rank==0: print(f"runtime {time.time()-stime}s, solve done.")
 # Create a fixed solid body like rotation to stress
 # particle advection. Note that this only creates a 
 # 2d flow, and might be important to do a 3d flow to
@@ -150,23 +160,38 @@ with mesh.access(stokes.u):
         vel[1] =  fact*tcoord[0]
         stokes.u.data[index] = vel
 
-import plot
-figs = plot.Plot(rulers=True)
+#import plot
+#figs = plot.Plot(rulers=True)
 # fig.edges(mesh)
-with swarm.access(),mesh.access():
+#with swarm.access(),mesh.access():
     # figs.swarm_points(swarm, matSwarmVar.data, pointsize=4, colourmap="blue green", colourbar=False, title=time)
-    figs.vector_arrows(mesh, stokes.u.data)
+ #   figs.vector_arrows(mesh, stokes.u.data)
     # fig.nodes(mesh,matMeshVar.data,colourmap="blue green", pointsize=6, pointtype=4)
-figs.image("velfield")
+#figs.image("velfield")
 
 vrms = math.sqrt(v_dot_v_int.evaluate()/volume)
 
 dt = stokes.dt()
-with swarm.access():
-    vel_on_particles = uw.function.evaluate(stokes.u.fn,swarm.particle_coordinates.data)
 
-with swarm.access(swarm.particle_coordinates):
-    swarm.particle_coordinates.data[:]+=dt*vel_on_particles
+# Note that the evaluate method is way too slow at the moment. We won't use it. 
+# with swarm.access():
+#     vel_on_particles = uw.function.evaluate(stokes.u.fn,swarm.particle_coordinates.data)
+
+# Instead, as we have a closed form velocity, use that directly.
+with swarm.access(velSwarmVar):
+    for index,coord in enumerate(swarm.particle_coordinates.data):
+        tcoord = coord - (0.5,)*dim
+        # force to zero at boundaries
+        fact = (1.-4.*tcoord[0]**2)*(1-4*tcoord[1]**2)
+        vel[0] = -fact*tcoord[1]
+        vel[1] =  fact*tcoord[0]
+        velSwarmVar.data[index] = vel
+if rank==0: print(f"runtime {time.time()-stime}s, particle velocity done.")
+
+# with swarm.access(swarm.particle_coordinates):
+#     swarm.particle_coordinates.data[:]+=dt*velSwarmVar.data[:]
+
+# if rank==0: print(f"runtime {time.time()-stime}s, particle advect done.")
 
 if MPI.COMM_WORLD.rank==0: print(f"VRMS = {vrms}")
 
