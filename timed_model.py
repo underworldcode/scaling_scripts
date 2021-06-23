@@ -9,12 +9,12 @@ from petsc4py import PETSc
 from underworld3.systems import Stokes
 from mpi4py import MPI
 
-order = int(os.getenv("UW_ORDER","1"))
-res   = int(os.getenv("UW_RESOLUTION",8))
-dim   = int(os.getenv("UW_DIM",3))
+order = int(os.getenv("UW_ORDER", "1" ))
+res   = int(os.getenv("UW_RESOLUTION", 8 ))
+dim   = int(os.getenv("UW_DIM", 3 ))
 
-otol  = float(os.getenv("UW_SOL_TOLERANCE",1.e-6))
-max_its  = int(os.getenv("UW_MAX_ITS",-1))
+otol  = float(os.getenv("UW_SOL_TOLERANCE", 1.e-6))
+max_its  = int(os.getenv("UW_MAX_ITS", -1))
 
 jobid = str(os.getenv("PBS_JOBID",os.getenv("SLURM_JOB_ID","0000000")))
 
@@ -135,6 +135,30 @@ import math
 
 # Solve time
 stokes.solve()
+
+# Create a fixed solid body like rotation to stress
+# particle advection. Note that this only creates a 
+# 2d flow, and might be important to do a 3d flow to
+# really test parallel topology.
+vel = np.zeros(dim)
+with mesh.access(stokes.u):
+    for index,coord in enumerate(stokes.u.coords):
+        tcoord = coord - (0.5,)*dim
+        # force to zero at boundaries
+        fact = (1.-4.*tcoord[0]**2)*(1-4*tcoord[1]**2)
+        vel[0] = -fact*tcoord[1]
+        vel[1] =  fact*tcoord[0]
+        stokes.u.data[index] = vel
+
+import plot
+figs = plot.Plot(rulers=True)
+# fig.edges(mesh)
+with swarm.access(),mesh.access():
+    # figs.swarm_points(swarm, matSwarmVar.data, pointsize=4, colourmap="blue green", colourbar=False, title=time)
+    figs.vector_arrows(mesh, stokes.u.data)
+    # fig.nodes(mesh,matMeshVar.data,colourmap="blue green", pointsize=6, pointtype=4)
+figs.image("velfield")
+
 vrms = math.sqrt(v_dot_v_int.evaluate()/volume)
 
 dt = stokes.dt()
