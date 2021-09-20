@@ -131,12 +131,29 @@ pressure_int = uw.utils.Integral( mesh=mesh, fn=pdotp )
 
 # Get instantaneous Stokes solution
 solver.solve()
-# Calculate the RMS velocity.
-vrms = math.sqrt( v2sum_integral.evaluate()[0] )
-prms = math.sqrt( pressure_int.evaluate()[0] )
 
 stats=solver.get_stats()
 solver.print_stats()
+
+# If using `max_its`, velocity solution should not be 
+# trust, so switch to fixed velocity field.
+if max_its >= 0:
+    for index,coord in enumerate(mesh.data):
+        transcoord = coord - (0.5,0.5,0.)
+        if   (coord[0] >= 0.) and (coord[1] >= 0.):
+            velocityField.data[index] = (-1.,  0.,  0.)
+        elif (coord[0] <= 0.) and (coord[1] >= 0.):
+            velocityField.data[index] = ( 0., -1.,  0.)
+        elif (coord[0] <= 0.) and (coord[1] <= 0.):
+            velocityField.data[index] = ( 1.,  0.,  0.)
+        elif (coord[0] >= 0.) and (coord[1] <= 0.):
+            velocityField.data[index] = ( 0.,  1.,  0.)
+        else:
+            velocityField.data[index] = ( 0.,  0.,  0.)
+
+# Calculate the RMS velocity.
+vrms = math.sqrt( v2sum_integral.evaluate()[0] )
+prms = math.sqrt( pressure_int.evaluate()[0] )
 
 temperatureField      = uw.mesh.MeshVariable( mesh=mesh, nodeDofCount=1 )
 temperatureFieldDeriv = uw.mesh.MeshVariable( mesh=mesh, nodeDofCount=1 )
@@ -157,10 +174,12 @@ advdiff = uw.systems.AdvectionDiffusion(velocityField=velocityField, phiField=te
 #                                        fn_diffusivity=1.,conditions=advdiffBc, allow_non_q1=True, method="SLCN")
 
 # Create a swarm.
+if uw.mpi.rank==0: print("Creating Swarm")
 swarm = uw.swarm.Swarm( mesh=mesh, particleEscape=True)
 # Create a layout object, populate the swarm with particles.
 materialIndex = swarm.add_variable('int',1)
-swarmLayout = uw.swarm.layouts.PerCellSpaceFillerLayout( swarm=swarm, particlesPerCell=40 )
+swarmLayout = uw.swarm.layouts.PerCellSpaceFillerLayout( swarm=swarm, particlesPerCell=20 )
+if uw.mpi.rank==0: print("Populating swarm")
 swarm.populate_using_layout( layout=swarmLayout )
 # Create a system to advect the swarm
 advector = uw.systems.SwarmAdvector( swarm=swarm, velocityField=velocityField, order=2 )
@@ -177,9 +196,11 @@ fig.append( vis.objects.VectorArrows( mesh, velocityField, scaling=1.0e2))
 # sizes. however, in particular for the swarm advection, 
 # we'd like to use the max timestep as this will stress
 # the communication overhead the most.
-dt = advector.get_max_dt()
+if uw.mpi.rank==0: print("Doing swarm advection")
+dt = 0.1*advector.get_max_dt()
 advector.integrate(dt)
-dt = advdiff.get_max_dt()
+if uw.mpi.rank==0: print("Doing advection diffusion")
+dt = 0.1*advdiff.get_max_dt()
 advdiff.integrate(dt)
 # dt = advdiff2.get_max_dt()
 # advdiff2.integrate(dt)
