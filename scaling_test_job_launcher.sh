@@ -44,8 +44,7 @@ do
    if [ $BATCH_SYS == "PBS" ] ; then
       # memory requirement guess: 3GB * nprocs
       MEMORY="$((4*${NTASKS}))GB"
-      PBSTASKS=`python2<<<"print((${NTASKS}/48 + (${NTASKS} % 48 > 0))*48)"`  # round up to nearest 48 as required by nci
-      # -V to pass all env vars to PBS (raijin/nci) 
+      PBSTASKS=`python3 <<<"print((int(${NTASKS}/48) + (${NTASKS} % 48 > 0))*48)"`  # round up to nearest 48 as required by nci
       CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/m18,ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
       echo ${CMD}
       ${CMD}
