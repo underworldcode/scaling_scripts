@@ -43,10 +43,10 @@ do
    export NTASKS="$((${i}*${i}*${i}))"
    export EXPORTVARS="UW_RESOLUTION,NTASKS,UW_ENABLE_IO,UW_ORDER,UW_DIM,UW_SOL_TOLERANCE,UW_MAX_ITS,UW_PENALTY,UW_MODEL,PICKLENAME"
    if [ $BATCH_SYS == "PBS" ] ; then
-      # memory requirement guess: 3GB * nprocs
-      MEMORY="$((4*${NTASKS}))GB"
       PBSTASKS=`python3 <<<"print((int(${NTASKS}/48) + (${NTASKS} % 48 > 0))*48)"`  # round up to nearest 48 as required by nci
-      CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/m18,ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
+      # memory requirement guess: 3GB * nprocs
+      MEMORY="$((3*${PBSTASKS}))GB"
+      CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/m18+gdata/q97,ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_container_go.sh"
       echo ${CMD}
       ${CMD}
    else

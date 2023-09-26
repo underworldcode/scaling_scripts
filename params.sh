@@ -1,16 +1,16 @@
 #!/bin/bash
-#export JOBS="1 2"
+export JOBS="1 2 4 6 8"
 #export JOBS="1 2 4 6 8 10 12 14 16 18 20 22"
-export JOBS="22 22"
-export UW_NAME="2.14.2_WeakScaling"
+#export JOBS="22 22"
+export UW_NAME="2.15.0_WeakScaling"
 export SCALING_TYPE=1  # 1=weak, 2=strong
 
 export UW_MODEL="SolDB3d"  #  "SolDB3d" for dim3, though penalty method probably needed for q1.
 export PICKLENAME=None   #"SolDB3d_Gadi_1e-11.pickle" #"conv_test_results_high_res_tighter_take2.pickle"  # set to "None" to disable conv testing
 export UW_ENABLE_IO="0"
 
-export WALLTIME="00:25:00"
-export ACCOUNT="pawsey0407"
+export WALLTIME="00:10:00"
+export ACCOUNT="m18"
 export QUEUE="normal" # normal or express  
 
 export UW_ORDER=1
