@@ -18,7 +18,8 @@ if qstat --version &> /dev/null ; then
    export NAME="${NAME}_Gadi"
 elif squeue --version &> /dev/null ; then
    BATCH_SYS="SLURM"
-   export NAME="${NAME}_Magnus"
+   export NAME="${NAME}_Setonix"
+   export ACCOUNT=pawsey0407
 else
    echo "Can't determine batch system"
    exit 1
@@ -49,7 +50,7 @@ do
       echo ${CMD}
       ${CMD}
    else
-      export IMAGE=/group/m18/singularity/underworld/underworld2_2.11.0b.sif
+      export IMAGE=/software/projects/pawsey0407/jgiordani/.singularity/underworld2_2.13.1b.sif
       #export IMAGE=/group/m18/singularity/underworld/underworld2_2.10.0b_rc.sif
       #export IMAGE=/group/m18/singularity/underworld/underworld2_v29.sif
       if [[ "$QUEUE" == "express" ]] ; then
@@ -59,7 +60,11 @@ do
       fi
       export OUTNAME="Res_"${UW_RESOLUTION}"_Nproc_"${NTASKS}"_JobID_"%j".out"
 
-      CMD="sbatch --export=IMAGE,${EXPORTVARS} --job-name=${NAME} --output=${OUTNAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} magnus_container_go.sh"
+      # Container
+      #CMD="sbatch --export=IMAGE,${EXPORTVARS} --job-name=${NAME} --output=${OUTNAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT} --partition=${QUEUE} setonix_container_go.sh"
+
+      # Baremetal
+      CMD="sbatch --export=IMAGE,${EXPORTVARS} --job-name=${NAME} --output=${OUTNAME} --ntasks=${NTASKS} --time=${WALLTIME} --account=${ACCOUNT}  setonix_baremetal_go.sh"
       echo ${CMD}
       ${CMD}
    fi
