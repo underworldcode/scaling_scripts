@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# the follow load the full software stack and running environment on gadi
-source /g/data/m18/codes/UWGeodynamics_2.10.sh
+module load petsc/3.21.3 python3/3.11.7 openmpi/4.1.7 python3-as-python hdf5/1.12.2p
+ 
+UWENV=/g/data/m18/software/venv/uw216 # Project directory
+export PATH=${UWENV}/bin:$PATH
+export PYTHONPATH=${UWENV}/lib/python3.11/site-packages/:$PYTHONPATH
+
 env
 cat timed_model.py
 

@@ -46,6 +46,7 @@ do
       # memory requirement guess: 3GB * nprocs
       MEMORY="$((3*${PBSTASKS}))GB"
       CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/m18+gdata/q97,ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_container_go.sh"
+      #CMD="qsub -v ${EXPORTVARS} -N ${NAME} -l storage=gdata/m18+gdata/q97,ncpus=${PBSTASKS},mem=${MEMORY},walltime=${WALLTIME},wd -P ${ACCOUNT} -q ${QUEUE} gadi_baremetal_go.sh"
       echo ${CMD}
       ${CMD}
    else
